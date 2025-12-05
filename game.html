@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Endless Side Scroller</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+        }
+        canvas {
+            display: block;
+            background: #70c5ce;
+        }
+        #score {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="score">Score: 0</div>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const gravity = 0.5;
+        let gameSpeed = 6;
+        let obstacleTimer = 0;
+        let obstacles = [];
+        let score = 0;
+        const scoreEl = document.getElementById('score');
+
+        class Player {
+            constructor() {
+                this.width = 50;
+                this.height = 50;
+                this.x = 100;
+                this.y = canvas.height - this.height - 100;
+                this.dy = 0;
+                this.jumpForce = 15;
+                this.grounded = false;
+            }
+            update() {
+                if (!this.grounded) {
+                    this.dy += gravity;
+                }
+                this.y += this.dy;
+
+                if (this.y + this.height >= canvas.height - 100) {
+                    this.y = canvas.height - this.height - 100;
+                    this.dy = 0;
+                    this.grounded = true;
+                }
+                this.draw();
+            }
+            jump() {
+                if (this.grounded) {
+                    this.dy = -this.jumpForce;
+                    this.grounded = false;
+                }
+            }
+            draw() {
+                ctx.fillStyle = '#ff0';
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+            }
+        }
+
+        class Obstacle {
+            constructor() {
+                this.width = 40;
+                this.height = 40;
+                this.x = canvas.width + this.width;
+                this.y = canvas.height - this.height - 100;
+            }
+            update() {
+                this.x -= gameSpeed;
+                this.draw();
+            }
+            draw() {
+                ctx.fillStyle = '#f00';
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+            }
+        }
+
+        const player = new Player();
+
+        function spawnObstacle() {
+            obstacles.push(new Obstacle());
+        }
+
+        function handleObstacles() {
+            if (obstacleTimer > 90) {
+                spawnObstacle();
+                obstacleTimer = 0;
+            }
+            obstacleTimer++;
+            obstacles.forEach((ob, index) => {
+                ob.update();
+                if (ob.x + ob.width < 0) {
+                    obstacles.splice(index, 1);
+                    score++;
+                    scoreEl.textContent = `Score: ${score}`;
+                }
+                // Collision detection
+                if (
+                    player.x < ob.x + ob.width &&
+                    player.x + player.width > ob.x &&
+                    player.y < ob.y + ob.height &&
+                    player.y + player.height > ob.y
+                ) {
+                    // Restart the game
+                    obstacles = [];
+                    score = 0;
+                    gameSpeed = 6;
+                    scoreEl.textContent = `Score: ${score}`;
+                }
+            });
+        }
+
+        function drawGround() {
+            ctx.fillStyle = '#654321';
+            ctx.fillRect(0, canvas.height - 100, canvas.width, 100);
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawGround();
+            player.update();
+            handleObstacles();
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        window.addEventListener('keydown', function(e) {
+            if (e.code === 'Space') {
+                player.jump();
+            }
+        });
+
+        window.addEventListener('resize', function() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
