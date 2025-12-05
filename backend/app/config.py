@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     serpapi_api_key: str = Field('', alias='SERPAPI_API_KEY')
 
     database_url: str = Field('postgresql+psycopg://postgres:postgres@localhost:5432/monad_agent', alias='DATABASE_URL')
+    simulate_only: bool = Field(True, alias='SIMULATE_ONLY', description="Skip live Symphony calls")
+    default_chain_id: int = Field(143, alias='CHAIN_ID')
 
 
 settings = Settings()
